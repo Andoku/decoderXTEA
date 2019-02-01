@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        widget.cpp
+        widget.cpp \
+    decoder.cpp
 
-HEADERS  += widget.h
+HEADERS  += widget.h \
+    decoder.h
 
 FORMS    += widget.ui
