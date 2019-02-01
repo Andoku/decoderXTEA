@@ -19,7 +19,8 @@ private:
 
     bool clampPackage(QByteArray *data);
     void unstuffPackage(QByteArray *data);
-    bool getImei(const QByteArray &data);
+    bool getImei(QByteArray *data);
+    void decipherData(QByteArray *data);
     bool checkCRC(const QByteArray &data);
 };
 
