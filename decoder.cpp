@@ -2,10 +2,9 @@
 
 #include "decoder.h"
 
-namespace {
-const quint8 header = 0xC0;
-const quint8 footer = 0xC2;
-const QString key = "01020304050607081112131415161718";
+namespace
+{
+const QString keyText = "01020304050607081112131415161718";
 }
 
 Decoder::Decoder() {}
@@ -13,23 +12,40 @@ Decoder::Decoder() {}
 bool Decoder::decode(QString package)
 {
     QByteArray hexData = QByteArray::fromHex(package.toUtf8());
-    if(!clampPackage(&hexData)) {
+
+    if(!unstuffPackage(&hexData)) {
         error = "Wrong package format";
         return false;
     }
-    unstuffPackage(&hexData);
+
     if(!getImei(&hexData)) {
         error = "Can't get IMEI - wrong package size";
         return false;
     }
+
+    if(!convertKey(keyText)) {
+        error = "Wrong key format";
+        return false;
+    }
+
+    if(!decipherData(&hexData)) {
+        error = "Can't decipher data";
+        return false;
+    }
+
+    if(!checkCRC(hexData)) {
+        error = "Wrong crc";
+        return false;
+    }
+
     data = hexData.toHex();
     return true;
 }
 
-bool Decoder::clampPackage(QByteArray *data)
+bool Decoder::unstuffPackage(QByteArray *data)
 {
-    const int headerIndex = data->indexOf(header);
-    const int footerIndex = data->indexOf(footer);
+    const int headerIndex = data->indexOf(0xC0);
+    const int footerIndex = data->indexOf(0xC2);
 
     if(headerIndex < 0 || footerIndex < 0 || !(headerIndex < footerIndex)) {
         return false;
@@ -37,14 +53,10 @@ bool Decoder::clampPackage(QByteArray *data)
 
     data->remove(footerIndex, data->size() - footerIndex);
     data->remove(0, headerIndex + 1);
-    return true;
-}
-
-void Decoder::unstuffPackage(QByteArray *data)
-{
     data->replace(QByteArray("\xC4\xC1"), QByteArray("\xC0"));
     data->replace(QByteArray("\xC4\xC3"), QByteArray("\xC2"));
     data->replace(QByteArray("\xC4\xC4"), QByteArray("\xC4"));
+    return true;
 }
 
 bool Decoder::getImei(QByteArray *data)
@@ -58,13 +70,13 @@ bool Decoder::getImei(QByteArray *data)
     return true;
 }
 
-void Decoder::decipherData(QByteArray *data)
+bool Decoder::decipherData(QByteArray *data)
 {
-    QByteArray keyData = key.toUtf8();
-
+    return false;
 }
 
-void xteaDecipher(unsigned int num_rounds, quint32 v[2], quint32 const k[4]) {
+void xteaDecipher(unsigned int num_rounds, quint32 v[2], quint32 const k[4])
+{
     const quint32 delta = 0x9E3779B9;
     quint32 sum = delta * num_rounds;
     quint32 v0 = v[0];
@@ -78,6 +90,61 @@ void xteaDecipher(unsigned int num_rounds, quint32 v[2], quint32 const k[4]) {
 
     v[0] = v0;
     v[1] = v1;
+}
+
+bool Decoder::checkCRC(const QByteArray &data)
+{
+    const int len = data.size() - 2;
+    if(len <= 0) {
+        return false;
+    }
+
+    quint16 crc = 0xFFFF;
+    for(int i = 0; i < len; ++i) {
+        crc ^= data[i] << 8;
+        for (int j = 0; j < 8; ++j) {
+            crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+        }
+    }
+
+    const quint16 rxCrc = (data[data.size() - 1] << 8) | data[data.size() - 2];
+    return rxCrc == crc;
+}
+
+bool Decoder::convertKey(QString keyText)
+{
+    key[0] = key[1] = key[2] = key[3] = 0;
+
+    for(int i = 0; i < keyText.size(); ++i) {
+        if (keyText[i].isDigit()) {
+            if (muladd128(key, 10, keyText[i].digitValue())) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+quint32 Decoder::muladd128(quint32 quad[4], const quint32 mul, const quint32 add) const
+{
+    quint64 temp = 0;
+
+    temp = (quint64) quad[3] * (quint64) mul + add;
+    quad[3] = temp;
+
+    temp = (quint64) quad[2] * (quint64) mul + (temp >> 32);
+    quad[2] = temp;
+
+    temp = (quint64) quad[1] * (quint64) mul + (temp >> 32);
+    quad[1] = temp;
+
+    temp = (quint64) quad[0] * (quint64) mul + (temp >> 32);
+    quad[0] = temp;
+
+    return temp >> 32;
 }
 
 QString Decoder::getError() const

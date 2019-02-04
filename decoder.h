@@ -16,12 +16,15 @@ private:
     QString error;
     QString data;
     QString imei;
+    quint32 key[4];
 
-    bool clampPackage(QByteArray *data);
-    void unstuffPackage(QByteArray *data);
+    bool unstuffPackage(QByteArray *data);
     bool getImei(QByteArray *data);
-    void decipherData(QByteArray *data);
+    bool decipherData(QByteArray *data);
     bool checkCRC(const QByteArray &data);
+    bool convertKey(QString key);
+
+    quint32 muladd128(quint32 quad[4], const quint32 mul, const quint32 add) const;
 };
 
 #endif // DECODER_H
