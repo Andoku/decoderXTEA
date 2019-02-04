@@ -16,12 +16,13 @@ Widget::~Widget()
 
 void Widget::handleDecodeButton()
 {
-    QString text = ui->plainTextEdit->toPlainText();
+    QString text = ui->input->toPlainText();
     ui->result->clear();
 
     if(decoder.decode(text)) {
-        ui->result->insertPlainText("IMEI: " + decoder.getImei() + "\n");
-        ui->result->insertPlainText("Data: " + decoder.getData() + "\n");
+        ui->result->insertHtml("<b>IMEI: </b>" + decoder.getImei() + "<br>");
+        ui->result->insertHtml("<b>Data: </b>" + decoder.getData() + "<br>");
+        ui->result->insertHtml("<b>CRC: </b>" + decoder.getCrc() + "<br>");
     } else {
         ui->result->insertPlainText("Error: " + decoder.getError() + "\n");
     }

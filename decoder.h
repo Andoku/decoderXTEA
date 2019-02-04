@@ -12,19 +12,20 @@ public:
     QString getError() const;
     QString getData() const;
     QString getImei() const;
+    QString getCrc() const;
 private:
     QString error;
     QString data;
     QString imei;
-    quint32 key[4];
+    quint16 crc;
 
     bool unstuffPackage(QByteArray *data);
     bool getImei(QByteArray *data);
+    bool getCrc(QByteArray *data);
     bool decipherData(QByteArray *data);
-    bool checkCRC(const QByteArray &data);
-    bool convertKey(QString key);
+    quint16 calculateCRC(const QByteArray &data);
 
-    quint32 muladd128(quint32 quad[4], const quint32 mul, const quint32 add) const;
+    void xteaDecipher(unsigned int num_rounds, quint32 v[2], quint32 const k[4]) const;
 };
 
 #endif // DECODER_H
