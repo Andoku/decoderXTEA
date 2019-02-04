@@ -21,9 +21,9 @@ void Widget::handleDecodeButton()
 
     if(decoder.decode(text)) {
         ui->result->insertHtml("<b>IMEI: </b>" + decoder.getImei() + "<br>");
-        ui->result->insertHtml("<b>Data: </b>" + decoder.getData() + "<br>");
+        ui->result->insertHtml("<b>Decrypted data: </b>" + decoder.getData() + "<br>");
         ui->result->insertHtml("<b>CRC: </b>" + decoder.getCrc() + "<br>");
     } else {
-        ui->result->insertPlainText("Error: " + decoder.getError() + "\n");
+        ui->result->insertHtml("<b>Error: </b>" + decoder.getError() + "<br>");
     }
 }

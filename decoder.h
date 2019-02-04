@@ -23,8 +23,8 @@ private:
     bool getImei(QByteArray *data);
     bool getCrc(QByteArray *data);
     bool decipherData(QByteArray *data);
-    quint16 calculateCRC(const QByteArray &data);
 
+    quint16 calculateCRC(const QByteArray &data) const;
     void xteaDecipher(unsigned int num_rounds, quint32 v[2], quint32 const k[4]) const;
 };
 

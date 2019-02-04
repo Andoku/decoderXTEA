@@ -109,7 +109,7 @@ void Decoder::xteaDecipher(unsigned int rounds, quint32 v[2], quint32 const k[4]
     v[1] = v1;
 }
 
-quint16 Decoder::calculateCRC(const QByteArray &data)
+quint16 Decoder::calculateCRC(const QByteArray &data) const
 {
     quint16 crc = 0xFFFF;
     for(int i = 0; i < data.size(); ++i) {
